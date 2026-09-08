@@ -1,0 +1,31 @@
+"""Wire this agent's prompt, tools and (optional) MCP subset into a deployable ADK agent.
+
+Only the files in this agent/ package change per agent; the framework/ package is identical
+across every agent. agent/__init__.py re-exports root_agent for main.py and the ADK CLI.
+"""
+
+from framework import CardInfo, build_agent{{MCP_IMPORT}}
+
+from . import config, tools
+from .prompts import SYSTEM_PROMPT
+
+root_agent = build_agent(
+    name="{{AGENT_SLUG}}_agent",
+    description="{{AGENT_DESCRIPTION}}",
+    instruction=SYSTEM_PROMPT,
+    model=config.settings.model,
+    connection=config.settings.llm_connection,
+    identifier=config.settings.llm_identifier,
+    tools=[
+{{TOOLS_LIST}}
+    ],
+)
+
+# Domain flavour for the card's resolution skill; the framework appends the fixed
+# A2A contract wording and the version.
+root_card = CardInfo(
+    tags=[{{CARD_TAGS}}],
+    examples=[{{CARD_EXAMPLES}}],
+    skill_description="{{CARD_SKILL_DESCRIPTION}}",
+    documentation_url="{{CARD_DOCUMENTATION_URL}}",
+)

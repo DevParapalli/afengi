@@ -1,0 +1,52 @@
+# Docker Compose / Podman Compose for local runs and small single-host deployments.
+# Config comes from a .env file (copy .env.example -> .env). Point DB_URL at an
+# external database, or uncomment the bundled postgres service below.
+#
+#   docker compose up --build      (or: podman compose up --build)
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: agent-app:dev
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/ready').status==200 else 1)
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    # Uncomment together with the db service to wait for the database first.
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+
+  # Optional local PostgreSQL. To use it, uncomment and set in .env:
+  #   DB_URL=postgresql+psycopg://agent:agent@db:5432/agent
+  # db:
+  #   image: postgres:17-alpine
+  #   environment:
+  #     POSTGRES_USER: agent
+  #     POSTGRES_PASSWORD: agent
+  #     POSTGRES_DB: agent
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U agent"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+
+# volumes:
+#   pgdata:

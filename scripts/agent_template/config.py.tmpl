@@ -1,0 +1,48 @@
+"""Settings for this agent.
+
+Everything this agent needs -- the LLM gateway, its downstream API connection(s), the MCP
+server and every credential -- lives here; editing it never touches the framework (framework
+holds no creds). Every value is env-switchable (e.g. LLM_CLIENT_ID) so the same code runs
+unchanged across dev / stage / prod. Creds are exposed to the framework connectors as grouped
+Connections via the properties below.
+
+Connections: each downstream API is a block of `<name>_base_url / _token_url / _client_id /
+_client_secret / _timeout` fields plus a `<name>_connection` property. Tools reach one via
+`_call(..., connection="<name>")`. Add another block to call another API with its own auth.
+"""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from framework.connection import Connection
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # LLM gateway (OpenAI-compatible).
+    llm_base_url: str = "{{LLM_BASE_URL}}"
+    llm_token_url: str = "{{LLM_TOKEN_URL}}"
+    llm_client_id: str = ""
+    llm_client_secret: str = ""
+    llm_identifier: str = ""
+    model: str = "{{MODEL}}"
+
+    # Downstream API connections (one block per connection).
+{{CONNECTION_FIELDS}}
+{{MCP_FIELDS}}
+    # Grouped connection accessors (handed to the framework connectors).
+    @property
+    def llm_connection(self) -> Connection:
+        """LLM gateway connection -- creds sent as HTTP Basic on the token request."""
+        return Connection(
+            url=self.llm_base_url,
+            token_url=self.llm_token_url,
+            client_id=self.llm_client_id,
+            client_secret=self.llm_client_secret,
+            basic_auth=True,
+        )
+
+{{CONNECTION_PROPERTIES}}
+{{MCP_PROPERTIES}}
+
+settings = Settings()

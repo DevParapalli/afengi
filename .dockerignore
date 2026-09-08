@@ -1,0 +1,20 @@
+# Deny everything, then allow back only what the image build needs. Without this,
+# .git / .env / local venvs enter the build context and bust the cache on every
+# unrelated change.
+*
+
+# What the image actually runs.
+!framework/
+!agent/
+!db/
+!main.py
+!pyproject.toml
+!uv.lock
+!README.md
+!.python-version
+
+# Belt-and-suspenders: re-exclude caches / secrets that live under allowed dirs.
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*

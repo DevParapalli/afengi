@@ -1,0 +1,16 @@
+"""System prompt for this agent -- domain knowledge only.
+
+Editing this file changes the agent's behaviour; no framework code changes. Holds ONLY this
+agent's domain knowledge (its identity, what its tools do, the identifier formats it needs to
+extract). The framework owns everything else -- the general behaviour and the decision
+contract behind /a2a and /decide are declared in the framework, and this prompt is
+injected into those templates.
+
+NOTE: do not use single curly braces here. ADK injects session state into the instruction via
+{name} placeholders, so any literal brace would be treated as a template variable. Write
+examples without braces.
+"""
+
+SYSTEM_PROMPT = """\
+{{SYSTEM_PROMPT}}
+"""

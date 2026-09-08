@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+
+# Local / dev image: single-stage on the uv slim base, so it keeps a shell + uv for
+# exec-ing in. NOT distroless and NOT built in CI -- use the main Dockerfile for
+# production. This is what compose.yaml builds for local development.
+
+ARG PYTHON_VERSION=3.14
+ARG UV_IMAGE=ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim
+FROM ${UV_IMAGE}
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    HOST=0.0.0.0 \
+    PORT=8080
+
+WORKDIR /app
+COPY pyproject.toml ./
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --no-dev
+COPY . .
+
+# Non-root, numeric UID (runAsNonRoot cannot resolve a name).
+RUN useradd --create-home --uid 10001 app && chown -R app:app /app
+USER 10001
+ENV PATH="/app/.venv/bin:$PATH"
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+    CMD python -c "import os,sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.getenv('PORT','8080')+'/ready').status==200 else 1)"
+
+CMD ["python", "main.py"]

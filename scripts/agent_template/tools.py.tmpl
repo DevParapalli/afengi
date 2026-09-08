@@ -1,0 +1,27 @@
+"""API tools for this agent -- one function per supported workflow.
+
+Tool docstrings are the model-facing schema: ADK builds each tool's description
+from the hints and docstring, and the framework prompt tells the agent to treat
+that description as the source of truth for mandatory fields. They stay long on
+purpose; everything else here is one line.
+
+A tool picks its connection via _call's `connection` argument (default 'api');
+add another block in config.py to reach a second API with its own credentials.
+"""
+
+from framework import make_authenticated_request
+
+from . import config
+
+
+def _call(endpoint: str, body: dict, *, connection: str = "api") -> dict:
+    """Authenticated POST to `<connection>_connection`'s endpoint."""
+    # connection names a config field, so one agent can reach several APIs each
+    # with its own credentials. Empty values are stripped, not sent as nulls.
+    conn = getattr(config.settings, f"{connection}_connection")
+    url = f"{conn.url}/{endpoint}"
+    payload = {k: v for k, v in body.items() if v not in (None, "", [], {})}
+    return make_authenticated_request(url, conn, method="POST", json_body=payload)
+
+
+{{TOOL_FUNCTIONS}}
