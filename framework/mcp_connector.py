@@ -3,6 +3,7 @@
 tool_filter (a list of tool names) narrows the exposed set client-side.
 """
 
+from google.adk.features import FeatureName, is_feature_enabled
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
 
@@ -14,14 +15,26 @@ def mcp_toolset(
     connection: Connection,
     *,
     tool_filter: list[str] | None = None,
+    timeout: float | None = None,
+    sse_read_timeout: float = 300.0,
 ) -> McpToolset:
     """McpToolset for the MCP server at connection.url.
 
     Call once per server to expose several MCP servers (each with own connection)
     to one agent. Every header degrades, sent only when configured: x-user-id /
     x-api-key (from creds), and a client-credentials bearer (minted only when
-    creds carry a client_id).
+    creds carry a client_id). timeout overrides connection.timeout. Raise
+    sse_read_timeout for servers that hold a response open (e.g. awaiting a human
+    approval); 300 matches ADK's own default.
     """
+    # ADK keeps 2026-07-28 behind an off-by-default flag and otherwise silently
+    # negotiates 2025-11-25, which servers that require stateless MCP refuse. Looked up
+    # by value: the enum member is private, and a rename should fail loudly here.
+    if not is_feature_enabled(FeatureName("MCP_MODERN_PROTOCOL")):
+        raise RuntimeError(
+            "mcp_toolset needs ADK_ENABLE_MCP_MODERN_PROTOCOL=1 in the process environment "
+            "(.env is not exported; locally use `uv run --env-file .env main.py`)"
+        )
     creds = connection
     url = connection.url
     base_headers: dict[str, str] = {}
@@ -44,7 +57,12 @@ def mcp_toolset(
         return {**base_headers, "Authorization": f"Bearer {token}"}
 
     return McpToolset(
-        connection_params=StreamableHTTPConnectionParams(url=url, headers=base_headers),
+        connection_params=StreamableHTTPConnectionParams(
+            url=url,
+            headers=base_headers,
+            timeout=connection.timeout if timeout is None else timeout,
+            sse_read_timeout=sse_read_timeout,
+        ),
         header_provider=headers,
         tool_filter=tool_filter,
     )

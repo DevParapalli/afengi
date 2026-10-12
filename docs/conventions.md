@@ -24,10 +24,12 @@ senior engineer returning after a break.
   root: `uv run main.py`, `adk web .`).
 - Version is read from `pyproject.toml [project].version` at runtime via
   `tomllib` (see `framework/config.py`), not from installed dist metadata.
-- **Dependency bound worth knowing:** `google-adk` requires `mcp>=1.24,<2`. This
-  project also depends on `mcp` directly, so the upper bound must be repeated in
-  `pyproject.toml` -- without it the resolver picks mcp 2.x, which drops
-  `mcp.shared.session` and breaks ADK's MCP toolset at import time.
+- **MCP protocol needs an ADK flag.** `mcp>=2.3` is pinned for protocol
+  `2026-07-28` (stateless), but ADK 2.11 only negotiates it with
+  `ADK_ENABLE_MCP_MODERN_PROTOCOL=1` in the process environment; otherwise it
+  silently falls back to `2025-11-25`. Both Dockerfiles set it, and
+  `mcp_toolset()` refuses to build without it. `.env` is read by pydantic but not
+  exported, so local runs need `uv run --env-file .env main.py`.
 
 ## Layout: the framework / agent split
 

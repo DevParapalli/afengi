@@ -6,12 +6,16 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.139.0",
-    "google-adk[a2a]>=2.3.0",
+    # 2.11 is the first ADK whose McpToolset imports on mcp 2.x.
+    "google-adk[a2a]>=2.11.0",
+    # Only framework/delegation.py: a2a-sdk's ClientConfig takes an httpx.AsyncClient.
+    # Everything else uses httpx2; drop this once a2a-sdk accepts an httpx2 client.
+    "httpx>=0.28.1",
     "httpx2>=2.5.0",
     "litellm>=1.93.0",
-    # google-adk requires mcp<2 (the 2.x restructure drops mcp.shared.session);
-    # this project depends on mcp directly, so the bound has to be repeated here.
-    "mcp>=1.28.1,<2",
+    # Floor is the protocol, not the API: mcp 2.x speaks 2026-07-28 (stateless),
+    # which the ahitung worker requires and will not negotiate down from.
+    "mcp>=2.3,<3",
     "pyjwt[crypto]>=2.13.0",
     "sqlalchemy>=2.0.51",
     "tenacity>=9.1.4",
