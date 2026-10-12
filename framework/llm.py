@@ -20,6 +20,10 @@ from .auth import _get_valid_token
 from .connection import Connection
 from .telemetry import end_model_call, start_model_call
 
+# Azure OpenAI deployment shape; a plain OpenAI-compatible server (e.g. the ahitung
+# worker at .../v1) sets Connection.url_template="{url}".
+DEFAULT_URL_TEMPLATE = "{url}/openai/deployments/{model}"
+
 
 class _GatewayClient(LiteLLMClient):
     """The litellm client ADK calls, pre-loaded with the gateway config.
@@ -35,8 +39,9 @@ class _GatewayClient(LiteLLMClient):
         self._identifier = identifier
 
     def _gateway_args(self) -> dict[str, Any]:
+        template = self._connection.url_template or DEFAULT_URL_TEMPLATE
         args: dict[str, Any] = {
-            "base_url": f"{self._connection.url}/openai/deployments/{self.model}",
+            "base_url": template.format(url=self._connection.url, model=self.model),
             "api_key": "unused",  # the real token travels in the api-key header
         }
         if self._connection.client_id:

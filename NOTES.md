@@ -11,11 +11,20 @@ lives in git. This file is only what is *not done*.
   serves unauthenticated. The stricter reading of fail-closed is to refuse to
   start unless auth is configured or an explicit `ALLOW_ANONYMOUS=true` is set.
   Not implemented -- the warning is a log line, not a guard.
-- **Gateway URL shape.** `framework/llm.py:39` hardcodes
-  `{base_url}/openai/deployments/{model}` (the Azure OpenAI shape). Pointing the
-  agent at the ahitung worker needs `llm_base_url=http://worker:8081/v1` with no
-  suffix, so this needs to become configurable -- a `url_template` field on
-  `Connection` rather than a new parameter. Not done.
+- **Model names on a plain OpenAI-compatible server.** `LLM_URL_TEMPLATE={url}`
+  points the agent at the ahitung worker, but litellm still picks its provider
+  from the model name: `gpt-*` routes as OpenAI, while an arbitrary worker model
+  name fails or routes to another provider's wire format. Workaround:
+  `MODEL=openai/<name>` (litellm strips the prefix; telemetry records it).
+  Forcing `custom_llm_provider="openai"` in `_GatewayClient` would fix it for
+  every agent, but changes routing for non-`gpt` models on existing gateways.
+  Undecided until the worker's model naming is known.
+- **Non-UUID session ids reach ahitung.** The ADK session id is the caller's
+  `contextId` (`/decide`) or A2A context id, sent verbatim under
+  `MCP_SESSION_HEADER`. workspaced refuses anything that is not a UUID, so a
+  caller sending `contextId: "ctx-1"` gets every workspace tool refused. Generated
+  ids (uuid7 / ADK uuid4) are fine. Options: validate at the endpoint, or map
+  non-UUIDs with uuid5. Not done.
 - **`warnings` in the protocol.** `Resolution.warnings` reaches callers via the
   `/decide` envelope and `afw.warnings` A2A metadata. Producers today are the
   degrade points (dropped attachment, unreadable A2A metadata, malformed
@@ -70,7 +79,14 @@ lives in git. This file is only what is *not done*.
   litellm's generators needs a real gateway and a long generation.
 - Anything against a live LLM gateway. All verification to date stubs
   `runner.stream`. MCP is covered against a local mcp 2.x server
-  (`scripts/.verification/mcp_toolset.py`) but **not against ahitung itself**.
+  (`scripts/.verification/mcp_toolset.py`). Against ahitung, only workspaced was
+  exercised, by hand on 2026-10-12: tool listing, `write_file` / `read_file` /
+  `edit_file` round-trips, and the refusal without `x-ahit-session-id`. That
+  run was on Windows with `fcntl` / `termios` stubbed, so the exec and terminal
+  tools were not run. The worker (LLM proxy + MCP) does not exist yet and is
+  untested.
+- **`decide_endpoint.py` needs `API_KEYS` set** (e.g. `API_KEYS=devkey`), or it
+  fails with an `IndexError` on line 56 before any check runs.
 - **The ADK modern-protocol flag is experimental and private.** If a future ADK
   renames or removes `MCP_MODERN_PROTOCOL`, `mcp_toolset()` raises `ValueError` at
   build time rather than degrading. Re-check on each ADK bump; drop the flag once

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     llm_client_id: str = ""
     llm_client_secret: str = ""
     llm_identifier: str = ""
+    # Call URL shape ({url}, {model}); empty = the Azure deployment shape. "{url}"
+    # for a plain OpenAI-compatible server such as the ahitung worker.
+    llm_url_template: str = ""
     model: str = "gpt-5-nano"
 
     # Downstream API connection "api" (base url + creds + timeout). tools reach it
@@ -38,6 +41,8 @@ class Settings(BaseSettings):
     mcp_client_secret: str = ""
     mcp_user_id: str = ""
     mcp_api_key: str = ""
+    # Header carrying the ADK session id; "x-ahit-session-id" for ahitung.
+    mcp_session_header: str = ""
 
     # Grouped connection accessors (handed to the framework connectors).
     @property
@@ -49,6 +54,7 @@ class Settings(BaseSettings):
             client_id=self.llm_client_id,
             client_secret=self.llm_client_secret,
             basic_auth=True,
+            url_template=self.llm_url_template,
         )
 
     @property
@@ -72,6 +78,7 @@ class Settings(BaseSettings):
             client_secret=self.mcp_client_secret,
             user_id=self.mcp_user_id,
             api_key=self.mcp_api_key,
+            session_header=self.mcp_session_header,
         )
 
 

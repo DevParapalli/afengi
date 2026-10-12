@@ -22,8 +22,8 @@ def mcp_toolset(
 
     Call once per server to expose several MCP servers (each with own connection)
     to one agent. Every header degrades, sent only when configured: x-user-id /
-    x-api-key (from creds), and a client-credentials bearer (minted only when
-    creds carry a client_id). timeout overrides connection.timeout. Raise
+    x-api-key (from creds), the ADK session id under connection.session_header,
+    and a client-credentials bearer (minted only when creds carry a client_id). timeout overrides connection.timeout. Raise
     sse_read_timeout for servers that hold a response open (e.g. awaiting a human
     approval); 300 matches ADK's own default.
     """
@@ -43,18 +43,22 @@ def mcp_toolset(
     if creds.api_key:
         base_headers[creds.api_key_header] = creds.api_key
 
-    def headers(_ctx=None) -> dict:
-        # Called per request: add a fresh (memoized) bearer token when the MCP
-        # client-credentials are configured; otherwise send only the base headers.
-        if not creds.client_id:
-            return {**base_headers}
-        token = _get_valid_token(
-            creds.client_id,
-            creds.client_secret,
-            creds.token_url,
-            basic_auth=creds.basic_auth,
-        )
-        return {**base_headers, "Authorization": f"Bearer {token}"}
+    def headers(ctx=None) -> dict:
+        # Called per request: add the session id and a fresh (memoized) bearer token
+        # when configured. ADK pools MCP sessions by header set, so a session header
+        # also gives each chat session its own pooled MCP session.
+        out = {**base_headers}
+        if creds.session_header and ctx is not None:
+            out[creds.session_header] = ctx.session.id
+        if creds.client_id:
+            token = _get_valid_token(
+                creds.client_id,
+                creds.client_secret,
+                creds.token_url,
+                basic_auth=creds.basic_auth,
+            )
+            out["Authorization"] = f"Bearer {token}"
+        return out
 
     return McpToolset(
         connection_params=StreamableHTTPConnectionParams(

@@ -44,3 +44,9 @@ class Connection:
     api_key_header: str = "x-api-key"
     # Per-call timeout in seconds for requests made over this connection.
     timeout: float = 60.0
+    # Call URL shape for consumers that build one from url, with {url} and {model}
+    # placeholders. Only the LLM gateway reads it; empty = that consumer's default.
+    url_template: str = ""
+    # Header that carries the ADK session id on every call (e.g. "x-ahit-session-id"
+    # for ahitung's workspaced). Only MCP reads it; empty = not sent.
+    session_header: str = ""

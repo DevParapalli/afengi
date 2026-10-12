@@ -168,6 +168,27 @@ async def main() -> None:
     )
     await authed.close()
 
+    print("Session header")
+    seen.clear()
+    scoped = mcp_toolset(Connection(url=f"{base}/mcp", session_header="x-ahit-session-id"))
+    ctx = await tool_context()
+    await scoped.get_tools(ReadonlyContext(ctx._invocation_context))
+    check(
+        "ADK session id sent on every MCP request",
+        {h.get("x-ahit-session-id") for h in seen},
+        {ctx._invocation_context.session.id},
+    )
+    await scoped.close()
+    seen.clear()
+    unscoped = mcp_toolset(Connection(url=f"{base}/mcp"))
+    await unscoped.get_tools(ReadonlyContext(ctx._invocation_context))
+    check(
+        "no session header unless configured",
+        any("x-ahit-session-id" in h for h in seen),
+        False,
+    )
+    await unscoped.close()
+
 
 asyncio.run(main())
 uv_server.should_exit = True

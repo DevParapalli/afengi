@@ -73,6 +73,8 @@ every connector -- LLM gateway, downstream API, MCP server, downstream agent:
     client_id / client_secret / basic_auth
     api_key / api_key_header / user_id
     timeout        per-call default, seconds
+    url_template   LLM call URL shape ({url}, {model}); empty = Azure deployment shape
+    session_header MCP header carrying the ADK session id; empty = not sent
 
 Each consumer reads only the fields it needs and **degrades on empties**: no
 `client_id` means no bearer is minted; no `api_key` means that header is not

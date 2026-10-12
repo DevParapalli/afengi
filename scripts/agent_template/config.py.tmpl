@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     llm_client_id: str = ""
     llm_client_secret: str = ""
     llm_identifier: str = ""
+    # Call URL shape ({url}, {model}); empty = the Azure deployment shape. "{url}"
+    # for a plain OpenAI-compatible server such as the ahitung worker.
+    llm_url_template: str = ""
     model: str = "{{MODEL}}"
 
     # Downstream API connections (one block per connection).
@@ -40,6 +43,7 @@ class Settings(BaseSettings):
             client_id=self.llm_client_id,
             client_secret=self.llm_client_secret,
             basic_auth=True,
+            url_template=self.llm_url_template,
         )
 
 {{CONNECTION_PROPERTIES}}

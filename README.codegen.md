@@ -79,11 +79,13 @@ LLM_IDENTIFIER=your-caller-id
 | --- | --- |
 | `LLM_CLIENT_ID` / `LLM_CLIENT_SECRET` / `LLM_IDENTIFIER` | LLM gateway auth **(required)** |
 | `LLM_BASE_URL` / `LLM_TOKEN_URL` | LLM gateway endpoints |
+| `LLM_URL_TEMPLATE` | Call URL shape with `{url}` / `{model}`; empty = `{url}/openai/deployments/{model}`, `{url}` for a plain OpenAI-compatible server |
 | `MODEL` | Model name for this agent |
 | `<CONN>_BASE_URL` / `<CONN>_TOKEN_URL` / `<CONN>_TIMEOUT` | A downstream API connection's base + token endpoint / timeout (s) |
 | `<CONN>_CLIENT_ID` / `<CONN>_CLIENT_SECRET` | Client-credentials for that connection |
 | `MCP_URL` / `MCP_TOKEN_URL` / `MCP_CLIENT_ID` / `MCP_CLIENT_SECRET` | MCP server + client-credentials (bearer) |
 | `MCP_USER_ID` / `MCP_API_KEY` | MCP routing headers |
+| `MCP_SESSION_HEADER` | Header carrying the ADK session id on every MCP call (`x-ahit-session-id` for ahitung) |
 
 `<CONN>` is the uppercased name of each connection you define in `agent/config.py`
 (the default one is `API`). Add more connections to reach more APIs — see step 7.

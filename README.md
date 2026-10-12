@@ -63,12 +63,14 @@ LLM_IDENTIFIER=your-caller-id
 | `TOOL_URL_ALLOWLIST` | Comma-separated hosts/URL prefixes the built-in `http_request` tool may reach (empty = none) | *(empty)* |
 | `LLM_CLIENT_ID` / `LLM_CLIENT_SECRET` / `LLM_IDENTIFIER` | LLM gateway auth **(required)** | — |
 | `LLM_BASE_URL` / `LLM_TOKEN_URL` | LLM gateway endpoints | — |
+| `LLM_URL_TEMPLATE` | Call URL shape with `{url}` / `{model}`; `{url}` for a plain OpenAI-compatible server (the ahitung worker) | `{url}/openai/deployments/{model}` |
 | `MODEL` | Model for the example agent | `gpt-5-nano` |
 | `API_BASE_URL` / `API_TOKEN_URL` / `API_TIMEOUT` | Downstream API tier + token endpoint / timeout (s) | — / `60` |
 | `API_CLIENT_ID` / `API_CLIENT_SECRET` | Client-credentials for the downstream API | — |
 | `MCP_URL` / `MCP_TOKEN_URL` | MCP server + client-credentials token endpoint | — |
 | `MCP_CLIENT_ID` / `MCP_CLIENT_SECRET` | MCP client-credentials (bearer token); omit to skip the token | — |
 | `MCP_USER_ID` / `MCP_API_KEY` | MCP routing headers; omit to skip the headers | — |
+| `MCP_SESSION_HEADER` | Header that carries the ADK session id on every MCP call; ahitung's workspaced requires `x-ahit-session-id` | *(not sent)* |
 
 ---
 
